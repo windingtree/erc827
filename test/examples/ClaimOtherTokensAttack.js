@@ -18,23 +18,26 @@ contract('ClaimOtherTokensAttack', function (accounts) {
     erc20 = await ERC20TokenMock.new(accounts[1], 100);
   });
 
-  it('should be able to take ERC20 tokens in ERC827 contract', async function () {
+  it('should not be able to take ERC20 tokens in ERC827 contract', async function () {
     await erc20.approve(erc827.address, 50, {from: accounts[1]});
     await erc20.transfer(erc827.address, 50, {from: accounts[1]});
 
+    (await erc20.balanceOf(accounts[1])).should.be.bignumber.equal(50);
+    (await erc20.balanceOf(accounts[0])).should.be.bignumber.equal(0);
+
     const getTokenBalanceData = erc20.contract.transfer
       .getData(accounts[0], 50);
-    await erc827.transferAndCall(erc20.address, 0, getTokenBalanceData, {from: accounts[0]});
+    await erc827.transferAndCall(erc20.address, 0, getTokenBalanceData, {from: accounts[0]}).should.be.rejectedWith(EVMRevert);
 
-    assert.equal(await erc20.balanceOf(accounts[1]), 50);
-    assert.equal(await erc20.balanceOf(accounts[0]), 50);
+    (await erc20.balanceOf(accounts[1])).should.be.bignumber.equal(50);
+    (await erc20.balanceOf(accounts[0])).should.be.bignumber.equal(0);
 
     const claimApprovedBalanceData = erc20.contract.transferFrom
       .getData(accounts[1], accounts[0], 50);
-    await erc827.transferAndCall(erc20.address, 0, claimApprovedBalanceData, {from: accounts[0]});
+    await erc827.transferAndCall(erc20.address, 0, claimApprovedBalanceData, {from: accounts[0]}).should.be.rejectedWith(EVMRevert);
 
-    assert.equal(await erc20.balanceOf(accounts[1]), 0);
-    assert.equal(await erc20.balanceOf(accounts[0]), 100);
+    (await erc20.balanceOf(accounts[1])).should.be.bignumber.equal(50);
+    (await erc20.balanceOf(accounts[0])).should.be.bignumber.equal(0);
   });
 
 });
