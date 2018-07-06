@@ -18,7 +18,8 @@ contract ERC827TokenAllowedCallbacks is StandardToken {
    * @dev Signatures fo the allowed callback allowed between contracts
    * Receiver => Sender => Function Signature => Allowed
    */
-  mapping(address => mapping(address => mapping(bytes4 => bool)))
+  enum FunctionType { None, Approve, Transfer, TransferFrom }
+  mapping(address => mapping(address => mapping(bytes4 => FunctionType)))
     public allowedCallbacks;
 
   /**
@@ -26,9 +27,9 @@ contract ERC827TokenAllowedCallbacks is StandardToken {
    * If a receiver allows address(0) means that it can be called by anyone
    * If a receiver allows bytes4(0) means that any function can be called
    */
-  modifier callbackAllowed(address to, bytes4 functionSignature) {
+  modifier callbackAllowed(address to, bytes4 functionSignature, FunctionType functionType) {
     // TO DO: Get first 4 bytes from data instead of using function signature
-    require(isCallbackAllowed(msg.sender, to, functionSignature));
+    require(isCallbackAllowed(msg.sender, to, functionSignature, functionType));
     _;
   }
 
@@ -37,9 +38,9 @@ contract ERC827TokenAllowedCallbacks is StandardToken {
    * @param from address The address that can execute the callback
    * @param functionSignature bytes4 The signature of the callback function
    */
-  function allowCallback(address from, bytes4 functionSignature) public {
+  function allowCallback(address from, bytes4 functionSignature, uint8 functionType) public {
     // TO DO: Check that msg.sender is a contract ?
-    allowedCallbacks[msg.sender][from][functionSignature] = true;
+    allowedCallbacks[msg.sender][from][functionSignature] = FunctionType(functionType);
   }
 
   /**
@@ -47,9 +48,9 @@ contract ERC827TokenAllowedCallbacks is StandardToken {
    * @param from address The address that can execute the callback
    * @param functionSignature bytes4 The signature of the callback function
    */
-  function removeCallback(address from, bytes4 functionSignature) public {
+  function removeCallback(address from, bytes4 functionSignature, uint8 functionType) public {
     // TO DO: Check that msg.sender is a contract ?
-    allowedCallbacks[msg.sender][from][functionSignature] = false;
+    allowedCallbacks[msg.sender][from][functionSignature] = FunctionType.None;
   }
 
   /**
@@ -72,7 +73,9 @@ contract ERC827TokenAllowedCallbacks is StandardToken {
     bytes4 _functionSignature,
     bytes _data
   )
-    public payable callbackAllowed(_spender, _functionSignature) returns (bool)
+    public payable
+    callbackAllowed(_spender, _functionSignature, FunctionType.Approve)
+    returns (bool)
   {
     require(_spender != address(this));
 
@@ -98,7 +101,9 @@ contract ERC827TokenAllowedCallbacks is StandardToken {
     bytes4 _functionSignature,
     bytes _data
   )
-    public payable callbackAllowed(_to, _functionSignature) returns (bool)
+    public payable
+    callbackAllowed(_to, _functionSignature, FunctionType.Transfer)
+    returns (bool)
   {
     require(_to != address(this));
 
@@ -125,7 +130,9 @@ contract ERC827TokenAllowedCallbacks is StandardToken {
     bytes4 _functionSignature,
     bytes _data
   )
-    public payable callbackAllowed(_to, _functionSignature) returns (bool)
+    public payable
+    callbackAllowed(_to, _functionSignature, FunctionType.TransferFrom)
+    returns (bool)
   {
     require(_to != address(this));
 
@@ -133,63 +140,6 @@ contract ERC827TokenAllowedCallbacks is StandardToken {
 
     // solium-disable-next-line security/no-call-value
     require(_to.call.value(msg.value)(_data));
-    return true;
-  }
-
-  /**
-   * @dev Addition to StandardToken methods. Increase the amount of tokens that
-   * an owner allowed to a spender and execute a call with the sent data.
-   * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _addedValue The amount of tokens to increase the allowance by.
-   * @param _data ABI-encoded contract call to call `_spender` address.
-   */
-  function increaseApprovalAndCall(
-    address _spender,
-    uint _addedValue,
-    bytes4 _functionSignature,
-    bytes _data
-  )
-    public payable callbackAllowed(_spender, _functionSignature) returns (bool)
-  {
-    require(_spender != address(this));
-
-    super.increaseApproval(_spender, _addedValue);
-
-    // solium-disable-next-line security/no-call-value
-    require(_spender.call.value(msg.value)(_data));
-
-    return true;
-  }
-
-  /**
-   * @dev Addition to StandardToken methods. Decrease the amount of tokens that
-   * an owner allowed to a spender and execute a call with the sent data.
-   * approve should be called when allowed[_spender] == 0. To decrement
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _subtractedValue The amount of tokens to decrease the allowance by.
-   * @param _data ABI-encoded contract call to call `_spender` address.
-   */
-  function decreaseApprovalAndCall(
-    address _spender,
-    uint _subtractedValue,
-    bytes4 _functionSignature,
-    bytes _data
-  )
-    public payable callbackAllowed(_spender, _functionSignature) returns (bool)
-  {
-    require(_spender != address(this));
-
-    super.decreaseApproval(_spender, _subtractedValue);
-
-    // solium-disable-next-line security/no-call-value
-    require(_spender.call.value(msg.value)(_data));
 
     return true;
   }
@@ -198,12 +148,12 @@ contract ERC827TokenAllowedCallbacks is StandardToken {
    * @dev Receives true or false depending if the callback can be executed
    */
   function isCallbackAllowed(
-    address from, address to, bytes4 functionSignature
+    address from, address to, bytes4 functionSignature, FunctionType functionType
   ) public view returns(bool) {
     return(
-      allowedCallbacks[to][address(0)][bytes4(0)] ||
-      allowedCallbacks[to][address(0)][functionSignature] ||
-      allowedCallbacks[to][from][functionSignature]
+      allowedCallbacks[to][address(0)][bytes4(0)] == functionType ||
+      allowedCallbacks[to][address(0)][functionSignature] == functionType ||
+      allowedCallbacks[to][from][functionSignature] == functionType
     );
   }
 
