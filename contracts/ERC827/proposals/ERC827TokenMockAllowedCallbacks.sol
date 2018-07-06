@@ -14,21 +14,31 @@ import "../../ERC20/StandardToken.sol";
  */
 contract ERC827TokenAllowedCallbacks is StandardToken {
 
-  /**
-   * @dev Signatures fo the allowed callback allowed between contracts
-   * Receiver => Sender => Function Signature => Allowed
-   */
+  // @dev Enum to represent the type of token functions in uint8
   enum FunctionType { None, Approve, Transfer, TransferFrom }
-  mapping(address => mapping(address => mapping(bytes4 => FunctionType)))
-    public allowedCallbacks;
+
+  /**
+   * @dev Signatures fo the callback allowed to be executed
+   * Receiver => Sender => Function Signature => FunctionType => Allowed
+   */
+  mapping(address =>
+    mapping(address =>
+      mapping(bytes4 =>
+        mapping(uint8 => bool)
+      )
+    )
+  ) public allowedCallbacks;
 
   /**
    * @dev Modifier that check the callback that wants to be executed
    * If a receiver allows address(0) means that it can be called by anyone
    * If a receiver allows bytes4(0) means that any function can be called
    */
-  modifier callbackAllowed(address to, bytes4 functionSignature, FunctionType functionType) {
-    // TO DO: Get first 4 bytes from data instead of using function signature
+  modifier callbackAllowed(address to, bytes data, FunctionType functionType) {
+    bytes4 functionSignature;
+    assembly {
+      functionSignature := mload(add(data, 32))
+    }
     require(isCallbackAllowed(msg.sender, to, functionSignature, functionType));
     _;
   }
@@ -37,20 +47,26 @@ contract ERC827TokenAllowedCallbacks is StandardToken {
    * @dev Allows a callback function to be executed to a receiver contract
    * @param from address The address that can execute the callback
    * @param functionSignature bytes4 The signature of the callback function
+   * @param fType FunctionType The type of the function
    */
-  function allowCallback(address from, bytes4 functionSignature, uint8 functionType) public {
+  function allowCallback(
+    address from, bytes4 functionSignature, FunctionType fType
+  ) public {
     // TO DO: Check that msg.sender is a contract ?
-    allowedCallbacks[msg.sender][from][functionSignature] = FunctionType(functionType);
+    allowedCallbacks[msg.sender][from][functionSignature][uint8(fType)] = true;
   }
 
   /**
    * @dev Remove a callback function to be executed to a receiver contract
    * @param from address The address that can execute the callback
    * @param functionSignature bytes4 The signature of the callback function
+   * @param fType FunctionType The type of the function
    */
-  function removeCallback(address from, bytes4 functionSignature, uint8 functionType) public {
+  function removeCallback(
+    address from, bytes4 functionSignature, FunctionType fType
+  ) public {
     // TO DO: Check that msg.sender is a contract ?
-    allowedCallbacks[msg.sender][from][functionSignature] = FunctionType.None;
+    allowedCallbacks[msg.sender][from][functionSignature][uint8(fType)] = false;
   }
 
   /**
@@ -67,14 +83,8 @@ contract ERC827TokenAllowedCallbacks is StandardToken {
    * @param _data ABI-encoded contract call to call `_spender` address.
    * @return true if the call function was executed successfully
    */
-  function approveAndCall(
-    address _spender,
-    uint256 _value,
-    bytes4 _functionSignature,
-    bytes _data
-  )
-    public payable
-    callbackAllowed(_spender, _functionSignature, FunctionType.Approve)
+  function approveAndCall(address _spender, uint256 _value, bytes _data)
+    public payable callbackAllowed(_spender, _data, FunctionType.Approve)
     returns (bool)
   {
     require(_spender != address(this));
@@ -95,14 +105,8 @@ contract ERC827TokenAllowedCallbacks is StandardToken {
    * @param _data ABI-encoded contract call to call `_to` address.
    * @return true if the call function was executed successfully
    */
-  function transferAndCall(
-    address _to,
-    uint256 _value,
-    bytes4 _functionSignature,
-    bytes _data
-  )
-    public payable
-    callbackAllowed(_to, _functionSignature, FunctionType.Transfer)
+  function transferAndCall(address _to, uint256 _value, bytes _data)
+    public payable callbackAllowed(_to, _data, FunctionType.Transfer)
     returns (bool)
   {
     require(_to != address(this));
@@ -124,14 +128,8 @@ contract ERC827TokenAllowedCallbacks is StandardToken {
    * @return true if the call function was executed successfully
    */
   function transferFromAndCall(
-    address _from,
-    address _to,
-    uint256 _value,
-    bytes4 _functionSignature,
-    bytes _data
-  )
-    public payable
-    callbackAllowed(_to, _functionSignature, FunctionType.TransferFrom)
+    address _from, address _to, uint256 _value, bytes _data
+  ) public payable callbackAllowed(_to, _data, FunctionType.TransferFrom)
     returns (bool)
   {
     require(_to != address(this));
@@ -146,14 +144,22 @@ contract ERC827TokenAllowedCallbacks is StandardToken {
 
   /**
    * @dev Receives true or false depending if the callback can be executed
+   * @param from address The address that can execute the callback
+   * @param to address The address where teh callback will be executed
+   * @param functionSignature bytes4 The signature of the callback function
+   * @param functionType FunctionType The type of the function
    */
   function isCallbackAllowed(
-    address from, address to, bytes4 functionSignature, FunctionType functionType
+    address from,
+    address to,
+    bytes4 functionSignature,
+    FunctionType functionType
   ) public view returns(bool) {
+    uint8 fType = uint8(functionType);
     return(
-      allowedCallbacks[to][address(0)][bytes4(0)] == functionType ||
-      allowedCallbacks[to][address(0)][functionSignature] == functionType ||
-      allowedCallbacks[to][from][functionSignature] == functionType
+      allowedCallbacks[to][address(0)][bytes4(0)][fType] ||
+      allowedCallbacks[to][address(0)][functionSignature][fType] ||
+      allowedCallbacks[to][from][functionSignature][fType]
     );
   }
 
