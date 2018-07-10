@@ -7,6 +7,17 @@ import "../ERC20/StandardToken.sol";
 
 
 /**
+ * @title ERC827Caller, an helping contract to forward arbitary calls
+ */
+contract ERC827Caller {
+    function makeCall(address _target, bytes _data) external payable returns (bool) {
+        // solium-disable-next-line security/no-call-value
+        return _target.call.value(msg.value)(_data);
+    }
+}
+
+
+/**
  * @title ERC827, an extension of ERC20 token standard
  *
  * @dev Implementation the ERC827, following the ERC20 standard with extra
@@ -14,6 +25,12 @@ import "../ERC20/StandardToken.sol";
  * approvals. Uses OpenZeppelin StandardToken.
  */
 contract ERC827Token is ERC827, StandardToken {
+
+  ERC827Caller public caller_;
+
+  constructor() public {
+      caller_ = new ERC827Caller();
+  }
 
   /**
    * @dev Addition to ERC20 token methods. It allows to
@@ -41,10 +58,7 @@ contract ERC827Token is ERC827, StandardToken {
     require(_spender != address(this));
 
     super.approve(_spender, _value);
-
-    // solium-disable-next-line security/no-call-value
-    require(_spender.call.value(msg.value)(_data));
-
+    require(caller_.makeCall.value(msg.value)(_spender, _data));
     return true;
   }
 
@@ -68,9 +82,7 @@ contract ERC827Token is ERC827, StandardToken {
     require(_to != address(this));
 
     super.transfer(_to, _value);
-
-    // solium-disable-next-line security/no-call-value
-    require(_to.call.value(msg.value)(_data));
+    require(caller_.makeCall.value(msg.value)(_to, _data));
     return true;
   }
 
@@ -94,9 +106,7 @@ contract ERC827Token is ERC827, StandardToken {
     require(_to != address(this));
 
     super.transferFrom(_from, _to, _value);
-
-    // solium-disable-next-line security/no-call-value
-    require(_to.call.value(msg.value)(_data));
+    require(caller_.makeCall.value(msg.value)(_to, _data));
     return true;
   }
 
@@ -123,10 +133,7 @@ contract ERC827Token is ERC827, StandardToken {
     require(_spender != address(this));
 
     super.increaseApproval(_spender, _addedValue);
-
-    // solium-disable-next-line security/no-call-value
-    require(_spender.call.value(msg.value)(_data));
-
+    require(caller_.makeCall.value(msg.value)(_spender, _data));
     return true;
   }
 
@@ -153,10 +160,7 @@ contract ERC827Token is ERC827, StandardToken {
     require(_spender != address(this));
 
     super.decreaseApproval(_spender, _subtractedValue);
-
-    // solium-disable-next-line security/no-call-value
-    require(_spender.call.value(msg.value)(_data));
-
+    require(caller_.makeCall.value(msg.value)(_spender, _data));
     return true;
   }
 

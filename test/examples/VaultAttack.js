@@ -18,21 +18,18 @@ contract('VaultAttack', function (accounts) {
     vault = await VaultAttack.new();
   });
 
-  it('should take all the tokens in the Vault contract', async function () {
+  it('should not take all the tokens in the Vault contract', async function () {
     await token.approve(vault.address, 100);
     await vault.deposit(token.address, 100);
 
-    assert.equal(await vault.getBalance(token.address, accounts[0]), 100);
+    (await vault.getBalance(token.address, accounts[0])).should.be.bignumber.equal(100);
+    (await vault.getBalance(token.address, accounts[1])).should.be.bignumber.equal(0);
 
     const attackData = vault.contract.tokenFallback.getData(accounts[1], 100, 0x0);
     await token.transferAndCall(vault.address, 0, attackData, {from: accounts[1]});
 
-    assert.equal(await vault.getBalance(token.address, accounts[1]), 100);
-
-    await vault.withdraw(token.address, 100, {from: accounts[1]});
-
-    assert.equal(await token.balanceOf(accounts[1]), 100);
-    assert.equal(await token.balanceOf(accounts[0]), 0);
+    (await vault.getBalance(token.address, accounts[0])).should.be.bignumber.equal(100);
+    (await vault.getBalance(token.address, accounts[1])).should.be.bignumber.equal(0);
   });
 
 });
