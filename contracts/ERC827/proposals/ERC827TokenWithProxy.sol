@@ -19,10 +19,9 @@ contract ERC827TokenWithProxy is ERC827, StandardToken {
 
   /**
    * @dev Constructor
-   * @param _proxy The address of the ERC827 proxy to be used
    */
-  constructor(ERC827Proxy _proxy) public {
-    proxy = _proxy;
+  constructor() public {
+    proxy = new ERC827Proxy();
   }
 
   /**
@@ -183,8 +182,8 @@ contract ERC827TokenWithProxy is ERC827, StandardToken {
 contract ERC827TokenWithProxyMock is ERC827TokenWithProxy {
 
   constructor(
-    address initialAccount, uint256 initialBalance, ERC827Proxy proxy
-  ) ERC827TokenWithProxy(proxy) public {
+    address initialAccount, uint256 initialBalance
+  ) public {
     balances[initialAccount] = initialBalance;
     totalSupply_ = initialBalance;
   }

@@ -14,9 +14,8 @@ contract('ERC827 Token with Proxy', function (accounts) {
   let token, proxy;
 
   beforeEach(async function () {
-    proxy = await ERC827Proxy.new({gasPrice: 0});
-    token = await ERC827TokenWithProxyMock.new(accounts[0], 100, proxy.address);
-    await proxy.setToken(token.address);
+    token = await ERC827TokenWithProxyMock.new(accounts[0], 100);
+    proxy = ERC827Proxy.at(await token.proxy());
   });
 
   it('should return the correct totalSupply after construction', async function () {

@@ -2,7 +2,6 @@
 
 pragma solidity ^0.4.24;
 
-import "../ERC827.sol";
 
 /**
  * @title ERC827Proxy
@@ -11,17 +10,14 @@ import "../ERC827.sol";
  */
 contract ERC827Proxy {
 
-  ERC827 public token;
+  address public token;
   bytes4 public makeCallSig = bytes4(keccak256('makeCall(address,bytes)'));
 
   /**
-   * @dev Set the token address, can be called only once
-   * @param _token The ERC827 token to be used for the proxy
+   * @dev constructor
    */
-  function setToken(ERC827 _token) public {
-    require(token == address(0));
-    require(_token != address(0));
-    token = _token;
+  constructor() public {
+    token = address(msg.sender);
   }
 
   /**
@@ -29,7 +25,7 @@ contract ERC827Proxy {
    * @param _target address The address which you want to transfer to
    * @param _data bytes The data to be executed in the call
    */
-  function makeCall(address _target, bytes _data) payable public returns (bool) {
+  function makeCall(address _target, bytes _data) public payable returns (bool) {
     require(msg.sender == address(token));
 
     // solium-disable-next-line security/no-call-value
