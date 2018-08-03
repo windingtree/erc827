@@ -25,23 +25,12 @@ contract ERC827Proxy {
   }
 
   /**
-   * @dev Forward arbitary calls with token balance or allowance
+   * @dev Forward arbitary calls
    * @param _target address The address which you want to transfer to
    * @param _data bytes The data to be executed in the call
    */
   function makeCall(address _target, bytes _data) payable public returns (bool) {
     require(msg.sender == address(token));
-
-    uint256 callerBalance = token.balanceOf(address(this));
-    uint256 callerAllowance = token.allowance(_target, address(this));
-
-    // Transfer token balance
-    if (callerBalance > 0)
-      token.transfer(_target, callerBalance);
-
-    // Transfer token allowance
-    if (callerAllowance > 0)
-      token.transferFrom(address(this), _target, callerAllowance);
 
     // solium-disable-next-line security/no-call-value
     require(_target.call.value(msg.value)(_data));
