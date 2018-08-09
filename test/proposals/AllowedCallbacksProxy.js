@@ -2,7 +2,7 @@
 import EVMRevert from '../helpers/EVMRevert';
 var Message = artifacts.require('./mocks/MessageHelper');
 var ERC827TokenMock = artifacts.require('./ERC827/proposals/ERC827TokenMockAllowedCallbacks');
-var ERC827Proxy = artifacts.require('./ERC827/proposals/ERC827Proxy');
+var ERC827AllowedCallbacksProxy = artifacts.require('./ERC827/proposals/ERC827AllowedCallbacksProxy');
 
 var BigNumber = web3.BigNumber;
 require('chai')
@@ -23,8 +23,8 @@ contract('ERC827 Proxy for allowed callbacks', function (accounts) {
     token = await ERC827TokenMock.new(accounts[0], 100);
   });
 
-  it('should forward token balance correctly with ERC827Proxy', async function () {
-    let proxy = await ERC827Proxy.new(token.address);
+  it('should forward token balance correctly with ERC827AllowedCallbacksProxy', async function () {
+    let proxy = await ERC827AllowedCallbacksProxy.new(token.address);
 
     let makeCallData = proxy.contract.makeCall.getData(message.address, messageData);
     let makeCallSig = makeCallData.substring(0, 10);
