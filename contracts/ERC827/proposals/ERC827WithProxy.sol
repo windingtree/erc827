@@ -3,7 +3,6 @@
 pragma solidity ^0.4.24;
 
 import "../ERC827.sol";
-import "../../ERC20/StandardToken.sol";
 import "./ERC827Proxy.sol";
 
 /**
@@ -11,9 +10,9 @@ import "./ERC827Proxy.sol";
  *
  * @dev Implementation the ERC827, following the ERC20 standard with extra
  * methods to transfer value and data and execute calls in transfers and
- * approvals. Uses OpenZeppelin StandardToken and ERC827Proxy.
+ * approvals. Uses OpenZeppelin ERC20 and ERC827Proxy.
  */
-contract ERC827TokenWithProxy is ERC827, StandardToken {
+contract ERC827WithProxy is ERC827 {
 
   ERC827Proxy public proxy;
 
@@ -115,7 +114,7 @@ contract ERC827TokenWithProxy is ERC827, StandardToken {
   }
 
   /**
-   * @dev Addition to StandardToken methods. Increase the amount of tokens that
+   * @dev Addition to ERC20 methods. Increase the amount of tokens that
    * an owner allowed to a spender and execute a call with the sent data.
    * approve should be called when allowed[_spender] == 0. To increment
    * allowed value is better to use this function to avoid 2 calls (and wait until
@@ -125,7 +124,7 @@ contract ERC827TokenWithProxy is ERC827, StandardToken {
    * @param _addedValue The amount of tokens to increase the allowance by.
    * @param _data ABI-encoded contract call to call `_spender` address.
    */
-  function increaseApprovalAndCall(
+  function increaseAllowanceAndCall(
     address _spender,
     uint _addedValue,
     bytes _data
@@ -136,7 +135,7 @@ contract ERC827TokenWithProxy is ERC827, StandardToken {
   {
     require(_spender != address(this));
 
-    super.increaseApproval(_spender, _addedValue);
+    super.increaseAllowance(_spender, _addedValue);
 
     // solium-disable-next-line security/no-call-value
     require(address(proxy).call.value(msg.value)(
@@ -156,7 +155,7 @@ contract ERC827TokenWithProxy is ERC827, StandardToken {
    * @param _subtractedValue The amount of tokens to decrease the allowance by.
    * @param _data ABI-encoded contract call to call `_spender` address.
    */
-  function decreaseApprovalAndCall(
+  function decreaseAllowanceAndCall(
     address _spender,
     uint _subtractedValue,
     bytes _data
@@ -167,7 +166,7 @@ contract ERC827TokenWithProxy is ERC827, StandardToken {
   {
     require(_spender != address(this));
 
-    super.decreaseApproval(_spender, _subtractedValue);
+    super.decreaseAllowance(_spender, _subtractedValue);
 
     // solium-disable-next-line security/no-call-value
     require(address(proxy).call.value(msg.value)(
@@ -179,13 +178,12 @@ contract ERC827TokenWithProxy is ERC827, StandardToken {
 }
 
 // mock class using ERC827 Token with proxy
-contract ERC827TokenWithProxyMock is ERC827TokenWithProxy {
+contract ERC827WithProxyMock is ERC827WithProxy {
 
   constructor(
     address initialAccount, uint256 initialBalance
   ) public {
-    balances[initialAccount] = initialBalance;
-    totalSupply_ = initialBalance;
+    _mint(initialAccount, initialBalance);
   }
 
 }
