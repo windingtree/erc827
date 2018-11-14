@@ -2,7 +2,8 @@
 import EVMRevert from '../helpers/EVMRevert';
 var Message = artifacts.require('MessageHelper');
 var ERC827Proxy = artifacts.require('ERC827Proxy');
-var ERC827TokenWithProxyMock = artifacts.require('ERC827TokenWithProxyMock');
+var ERC827WithProxy = artifacts.require('ERC827WithProxy');
+var ERC827WithProxyMock = artifacts.require('ERC827WithProxyMock');
 
 var BigNumber = web3.BigNumber;
 require('chai')
@@ -14,7 +15,7 @@ contract('ERC827 Token with Proxy', function (accounts) {
   let token, proxy;
 
   beforeEach(async function () {
-    token = await ERC827TokenWithProxyMock.new(accounts[0], 100);
+    token = await ERC827WithProxyMock.new(accounts[0], 100);
     proxy = ERC827Proxy.at(await token.proxy());
   });
 
@@ -77,20 +78,13 @@ contract('ERC827 Token with Proxy', function (accounts) {
     });
 
     it('should increase by 50 then decrease by 10', async function () {
-      await token.increaseApproval(accounts[1], 50);
+      await token.increaseAllowance(accounts[1], 50);
       let postIncrease = await token.allowance(accounts[0], accounts[1]);
       preApproved.plus(50).should.be.bignumber.equal(postIncrease);
-      await token.decreaseApproval(accounts[1], 10);
+      await token.decreaseAllowance(accounts[1], 10);
       let postDecrease = await token.allowance(accounts[0], accounts[1]);
       postIncrease.minus(10).should.be.bignumber.equal(postDecrease);
     });
-  });
-
-  it('should increase by 50 then set to 0 when decreasing by more than 50', async function () {
-    await token.approve(accounts[1], 50);
-    await token.decreaseApproval(accounts[1], 60);
-    let postDecrease = await token.allowance(accounts[0], accounts[1]);
-    postDecrease.should.be.bignumber.equal(0);
   });
 
   it('should throw an error when trying to transfer to 0x0', async function () {
@@ -151,7 +145,7 @@ contract('ERC827 Token with Proxy', function (accounts) {
       });
 
     it(
-      'should allow payment through increaseApproval'
+      'should allow payment through increaseAllowance'
       , async function () {
         const message = await Message.new();
 
@@ -164,7 +158,7 @@ contract('ERC827 Token with Proxy', function (accounts) {
           await token.allowance(accounts[0], message.contract.address)
         );
 
-        const transaction = await token.increaseApprovalAndCall(
+        const transaction = await token.increaseAllowanceAndCall(
           message.contract.address, 50, extraData, { from: accounts[0], value: 1000 }
         );
 
@@ -179,7 +173,7 @@ contract('ERC827 Token with Proxy', function (accounts) {
       });
 
     it(
-      'should allow payment through decreaseApproval'
+      'should allow payment through decreaseAllowance'
       , async function () {
         const message = await Message.new();
 
@@ -193,7 +187,7 @@ contract('ERC827 Token with Proxy', function (accounts) {
           web3.toHex(123456), 666, 'Transfer Done'
         );
 
-        const transaction = await token.decreaseApprovalAndCall(
+        const transaction = await token.decreaseAllowanceAndCall(
           message.contract.address, 60, extraData, { from: accounts[0], value: 1000 }
         );
 
@@ -331,7 +325,7 @@ contract('ERC827 Token with Proxy', function (accounts) {
       });
 
     it(
-      'should return correct allowance after increaseApproval (with data) and show the event on receiver contract'
+      'should return correct allowance after increaseAllowance (with data) and show the event on receiver contract'
       , async function () {
         const message = await Message.new();
 
@@ -344,7 +338,7 @@ contract('ERC827 Token with Proxy', function (accounts) {
           await token.allowance(accounts[0], message.contract.address)
         );
 
-        const transaction = await token.increaseApprovalAndCall(message.contract.address, 50, extraData);
+        const transaction = await token.increaseAllowanceAndCall(message.contract.address, 50, extraData);
 
         assert.equal(2, transaction.receipt.logs.length);
 
@@ -354,7 +348,7 @@ contract('ERC827 Token with Proxy', function (accounts) {
       });
 
     it(
-      'should return correct allowance after decreaseApproval (with data) and show the event on receiver contract'
+      'should return correct allowance after decreaseAllowance (with data) and show the event on receiver contract'
       , async function () {
         const message = await Message.new();
 
@@ -368,7 +362,7 @@ contract('ERC827 Token with Proxy', function (accounts) {
           web3.toHex(123456), 666, 'Transfer Done'
         );
 
-        const transaction = await token.decreaseApprovalAndCall(message.contract.address, 60, extraData);
+        const transaction = await token.decreaseAllowanceAndCall(message.contract.address, 60, extraData);
 
         assert.equal(2, transaction.receipt.logs.length);
 
