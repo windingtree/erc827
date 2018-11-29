@@ -4,6 +4,8 @@ var Message = artifacts.require('MessageHelper');
 var ERC827Proxy = artifacts.require('ERC827Proxy');
 var ERC827WithProxy = artifacts.require('ERC827WithProxy');
 var ERC827WithProxyMock = artifacts.require('ERC827WithProxyMock');
+var VaultAttack = artifacts.require('VaultAttack');
+var ERC20TokenMock = artifacts.require('ERC20TokenMock');
 
 var BigNumber = web3.BigNumber;
 require('chai')
@@ -473,5 +475,60 @@ contract('ERC827 Token with Proxy', function (accounts) {
       await token.transferFromAndCall(accounts[0], token.contract.address, 1, extraData, { from: accounts[1] })
         .should.be.rejectedWith(EVMRevert);
     });
+  });
+
+  describe('Test ERC827 attacks', function() {
+
+    it('shouldnt be able to take all the tokens in the Vault contract', async function () {
+
+      token = await ERC827WithProxyMock.new(accounts[0], 100);
+      const vault = await VaultAttack.new();
+
+      await token.approve(vault.address, 100);
+      await vault.deposit(token.address, 100);
+
+      assert.equal(await vault.getBalance(token.address, accounts[0]), 100);
+
+      const attackData = vault.contract.tokenFallback.getData(accounts[1], 100, 0x0);
+      await token.transferAndCall(vault.address, 0, attackData, {from: accounts[1]});
+
+      // If attack succeds the balance would be 100 and the withdraw would work
+      assert.notEqual(await vault.getBalance(token.address, accounts[1]), 100);
+      await vault.withdraw(token.address, 100, {from: accounts[1]})
+        .should.be.rejectedWith(EVMRevert);
+
+      assert.equal(await token.balanceOf(accounts[1]), 0);
+      assert.equal(await token.balanceOf(accounts[0]), 0);
+      assert.equal(await token.balanceOf(vault.address), 100);
+    });
+
+    it('shouldnt be able to take ERC20 tokens in ERC827 contract', async function () {
+
+      const erc827 = await ERC827WithProxyMock.new(accounts[0], 100);
+      const erc20 = await ERC20TokenMock.new(accounts[1], 100);
+
+      await erc20.approve(erc827.address, 50, {from: accounts[1]});
+      await erc20.transfer(erc827.address, 50, {from: accounts[1]});
+
+      assert.equal(await erc20.balanceOf(accounts[1]), 50);
+      assert.equal(await erc20.balanceOf(accounts[0]), 0);
+      assert.equal(await erc20.balanceOf(erc827.address), 50);
+
+      const getTokenBalanceData = erc20.contract.transfer
+        .getData(accounts[0], 50);
+      await erc827.transferAndCall(erc20.address, 0, getTokenBalanceData, {from: accounts[0]})
+        .should.be.rejectedWith(EVMRevert);
+
+      const claimApprovedBalanceData = erc20.contract.transferFrom
+        .getData(accounts[1], accounts[0], 50);
+      await erc827.transferAndCall(erc20.address, 0, claimApprovedBalanceData, {from: accounts[0]})
+        .should.be.rejectedWith(EVMRevert);
+
+      // Attacks were reverted and balance didnt changed
+      assert.equal(await erc20.balanceOf(accounts[1]), 50);
+      assert.equal(await erc20.balanceOf(accounts[0]), 0);
+      assert.equal(await erc20.balanceOf(erc827.address), 50);
+    });
+
   });
 });
