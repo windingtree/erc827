@@ -1,6 +1,4 @@
 
-import EVMRevert from '../helpers/EVMRevert';
-var Message = artifacts.require('MessageHelper');
 var ERC827TokenMock = artifacts.require('ERC827TokenMock');
 var VaultAttack = artifacts.require('VaultAttack');
 

@@ -37,14 +37,8 @@ contract ERC827WithProxy is ERC827 {
    * @param _data ABI-encoded contract call to call `_spender` address.
    * @return true if the call function was executed successfully
    */
-  function approveAndCall(
-    address _spender,
-    uint256 _value,
-    bytes _data
-  )
-    public
-    payable
-    returns (bool)
+  function approveAndCall(address _spender, uint256 _value, bytes _data)
+    public payable returns (bool)
   {
     require(_spender != address(this));
 
@@ -65,14 +59,8 @@ contract ERC827WithProxy is ERC827 {
    * @param _data ABI-encoded contract call to call `_to` address.
    * @return true if the call function was executed successfully
    */
-  function transferAndCall(
-    address _to,
-    uint256 _value,
-    bytes _data
-  )
-    public
-    payable
-    returns (bool)
+  function transferAndCall(address _to, uint256 _value, bytes _data)
+    public payable returns (bool)
   {
     require(_to != address(this));
 
@@ -94,12 +82,7 @@ contract ERC827WithProxy is ERC827 {
    * @param _data ABI-encoded contract call to call `_to` address.
    * @return true if the call function was executed successfully
    */
-  function transferFromAndCall(
-    address _from,
-    address _to,
-    uint256 _value,
-    bytes _data
-  )
+  function transferFromAndCall(address _from, address _to, uint256 _value, bytes _data)
     public payable returns (bool)
   {
     require(_to != address(this));
@@ -124,14 +107,8 @@ contract ERC827WithProxy is ERC827 {
    * @param _addedValue The amount of tokens to increase the allowance by.
    * @param _data ABI-encoded contract call to call `_spender` address.
    */
-  function increaseAllowanceAndCall(
-    address _spender,
-    uint _addedValue,
-    bytes _data
-  )
-    public
-    payable
-    returns (bool)
+  function increaseAllowanceAndCall(address _spender, uint _addedValue, bytes _data)
+    public payable returns (bool)
   {
     require(_spender != address(this));
 
@@ -155,14 +132,8 @@ contract ERC827WithProxy is ERC827 {
    * @param _subtractedValue The amount of tokens to decrease the allowance by.
    * @param _data ABI-encoded contract call to call `_spender` address.
    */
-  function decreaseAllowanceAndCall(
-    address _spender,
-    uint _subtractedValue,
-    bytes _data
-  )
-    public
-    payable
-    returns (bool)
+  function decreaseAllowanceAndCall(address _spender, uint _subtractedValue, bytes _data)
+    public payable returns (bool)
   {
     require(_spender != address(this));
 
