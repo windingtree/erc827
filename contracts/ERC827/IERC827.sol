@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
@@ -12,18 +12,27 @@ import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
  * approvals.
  */
 contract IERC827 is IERC20 {
-  function approveAndCall(address _spender, uint256 _value, bytes _data)
+  function approveAndCall(address _spender, uint256 _value, bytes memory _data)
     public payable returns (bool);
 
-  function transferAndCall(address _to, uint256 _value, bytes _data)
+  function transferAndCall(address _to, uint256 _value, bytes memory _data)
     public payable returns (bool);
 
-  function transferFromAndCall(address _from, address _to, uint256 _value, bytes _data)
+  function transferFromAndCall(
+    address _from,
+    address _to,
+    uint256 _value,
+    bytes memory _data
+  )
     public payable returns (bool);
 
-  function increaseAllowanceAndCall(address _spender, uint _addedValue, bytes _data)
+  function increaseAllowanceAndCall(
+    address _spender, uint _addedValue, bytes memory _data
+  )
     public payable returns (bool);
 
-  function decreaseAllowanceAndCall(address _spender, uint _subtractedValue, bytes _data)
+  function decreaseAllowanceAndCall(
+    address _spender, uint _subtractedValue, bytes memory _data
+  )
     public payable returns (bool);
 }
