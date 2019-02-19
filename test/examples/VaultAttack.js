@@ -1,36 +1,38 @@
 
+import EVMRevert from '../helpers/EVMRevert';
 var ERC827TokenMock = artifacts.require('ERC827TokenMock');
 var VaultAttack = artifacts.require('VaultAttack');
 
-var BigNumber = web3.BigNumber;
 require('chai')
   .use(require('chai-as-promised'))
-  .use(require('chai-bignumber')(BigNumber))
   .should();
 
-contract('VaultAttack', function (accounts) {
+contract('VaultAttack', function ([victim, attacker]) {
   let token, vault;
 
   beforeEach(async function () {
-    token = await ERC827TokenMock.new(accounts[0], 100);
+    token = await ERC827TokenMock.new(victim, 100);
     vault = await VaultAttack.new();
+    vault.web3Instance = new web3.eth.Contract(vault.abi, vault.address);
   });
 
-  it('should take all the tokens in the Vault contract', async function () {
+  it('should fail trying to take all the tokens in the Vault contract', async function () {
     await token.approve(vault.address, 100);
     await vault.deposit(token.address, 100);
 
-    assert.equal(await vault.getBalance(token.address, accounts[0]), 100);
+    assert.equal(await vault.getBalance(token.address, victim), 100);
 
-    const attackData = vault.contract.tokenFallback.getData(accounts[1], 100, 0x0);
-    await token.transferAndCall(vault.address, 0, attackData, {from: accounts[1]});
+    const attackData = vault.web3Instance.methods
+      .tokenFallback(attacker, 100, web3.utils.padRight('0x0', 32)).encodeABI();
+    await token.transferAndCall(vault.address, 0, attackData, { from: attacker });
 
-    assert.equal(await vault.getBalance(token.address, accounts[1]), 100);
+    assert.equal(await vault.getBalance(token.address, attacker), 0);
 
-    await vault.withdraw(token.address, 100, {from: accounts[1]});
+    await vault.withdraw(token.address, 100, { from: attacker })
+      .should.be.rejectedWith(EVMRevert);
 
-    assert.equal(await token.balanceOf(accounts[1]), 100);
-    assert.equal(await token.balanceOf(accounts[0]), 0);
+    // If attack succeds attacker would have 100, and victim 's vault 0
+    assert.equal(await token.balanceOf(attacker), 0);
+    assert.equal(await vault.getBalance(token.address, victim), 100);
   });
-
 });

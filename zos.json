@@ -1,0 +1,8 @@
+{
+  "zosversion": "2",
+  "name": "erc827",
+  "version": "0.1.0",
+  "contracts": {
+    "ERC827": "ERC827"
+  }
+}

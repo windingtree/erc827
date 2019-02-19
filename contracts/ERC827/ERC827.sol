@@ -1,18 +1,28 @@
 /* solium-disable security/no-low-level-calls */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
-import "./IERC827.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "./ERC827Proxy.sol";
+
 
 /**
  * @title ERC827, an extension of ERC20 token standard
  *
  * @dev Implementation the ERC827, following the ERC20 standard with extra
- * methods to transfer value and data and execute calls in transfers and
+ * methods to transfer value, data and execute calls inside transfers and
  * approvals. Uses OpenZeppelin ERC20.
  */
-contract ERC827 is IERC827, ERC20 {
+contract ERC827 is ERC20 {
+
+  ERC827Proxy public proxy;
+
+  /**
+   * @dev Constructor
+   */
+  constructor() public {
+    proxy = new ERC827Proxy();
+  }
 
   /**
    * @dev Addition to ERC20 token methods. It allows to
@@ -28,16 +38,11 @@ contract ERC827 is IERC827, ERC20 {
    * @param _data ABI-encoded contract call to call `_spender` address.
    * @return true if the call function was executed successfully
    */
-  function approveAndCall(address _spender, uint256 _value, bytes _data)
+  function approveAndCall(address _spender, uint256 _value, bytes memory _data)
     public payable returns (bool)
   {
-    require(_spender != address(this));
-
     super.approve(_spender, _value);
-
-    // solium-disable-next-line security/no-call-value
-    require(_spender.call.value(msg.value)(_data));
-
+    _call(_spender, _data);
     return true;
   }
 
@@ -49,15 +54,12 @@ contract ERC827 is IERC827, ERC20 {
    * @param _data ABI-encoded contract call to call `_to` address.
    * @return true if the call function was executed successfully
    */
-  function transferAndCall(address _to, uint256 _value, bytes _data)
+
+  function transferAndCall(address _to, uint256 _value, bytes memory _data)
     public payable returns (bool)
   {
-    require(_to != address(this));
-
     super.transfer(_to, _value);
-
-    // solium-disable-next-line security/no-call-value
-    require(_to.call.value(msg.value)(_data));
+    _call(_to, _data);
     return true;
   }
 
@@ -70,15 +72,13 @@ contract ERC827 is IERC827, ERC20 {
    * @param _data ABI-encoded contract call to call `_to` address.
    * @return true if the call function was executed successfully
    */
-  function transferFromAndCall(address _from, address _to, uint256 _value, bytes _data)
+  function transferFromAndCall(
+    address _from, address _to, uint256 _value, bytes memory _data
+  )
     public payable returns (bool)
   {
-    require(_to != address(this));
-
     super.transferFrom(_from, _to, _value);
-
-    // solium-disable-next-line security/no-call-value
-    require(_to.call.value(msg.value)(_data));
+    _call(_to, _data);
     return true;
   }
 
@@ -86,50 +86,55 @@ contract ERC827 is IERC827, ERC20 {
    * @dev Addition to ERC20 methods. Increase the amount of tokens that
    * an owner allowed to a spender and execute a call with the sent data.
    * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
+   * allowed value is better to use this function to avoid 2 calls (and wait
+   * until the first transaction is mined)
    * @param _spender The address which will spend the funds.
    * @param _addedValue The amount of tokens to increase the allowance by.
    * @param _data ABI-encoded contract call to call `_spender` address.
    */
-  function increaseAllowanceAndCall(address _spender, uint _addedValue, bytes _data)
-    public
-    payable
-    returns (bool)
+  function increaseAllowanceAndCall(
+    address _spender, uint _addedValue, bytes memory _data
+  )
+    public payable returns (bool)
   {
-    require(_spender != address(this));
-
     super.increaseAllowance(_spender, _addedValue);
-
-    // solium-disable-next-line security/no-call-value
-    require(_spender.call.value(msg.value)(_data));
-
+    _call(_spender, _data);
     return true;
   }
 
   /**
-   * @dev Addition to ERC20 methods. Decrease the amount of tokens that
+   * @dev Addition to StandardToken methods. Decrease the amount of tokens that
    * an owner allowed to a spender and execute a call with the sent data.
    * approve should be called when allowed[_spender] == 0. To decrement
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
+   * allowed value is better to use this function to avoid 2 calls (and wait
+   * until the first transaction is mined)
    * @param _spender The address which will spend the funds.
    * @param _subtractedValue The amount of tokens to decrease the allowance by.
    * @param _data ABI-encoded contract call to call `_spender` address.
    */
-  function decreaseAllowanceAndCall(address _spender, uint _subtractedValue, bytes _data)
+  function decreaseAllowanceAndCall(
+    address _spender, uint _subtractedValue, bytes memory _data
+  )
     public payable returns (bool)
   {
-    require(_spender != address(this));
-
     super.decreaseAllowance(_spender, _subtractedValue);
-
-    // solium-disable-next-line security/no-call-value
-    require(_spender.call.value(msg.value)(_data));
-
+    _call(_spender, _data);
     return true;
+  }
+
+  /**
+   * @dev Call a external contract
+   * @param _to The address of the contract to call
+   * @param _data ABI-encoded contract call to call `_to` address.
+   */
+  function _call(address _to, bytes memory _data) internal {
+
+    // solium-disable-next-line security/no-call-value, no-unused-vars
+    (bool success, bytes memory data) = address(proxy).call.value(msg.value)(
+      abi.encodeWithSelector(proxy.callContractFunctionSignature(), _to, _data)
+    );
+
+    require(success, "Call to external contract failed");
   }
 
 }
