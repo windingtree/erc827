@@ -17,7 +17,7 @@ contract('ERC827Migratable', function (accounts) {
     await erc20Token.transfer(accounts[4], 30, { from: accounts[1] });
   });
 
-  it.only('should change erc20 balance after opt-in migration', async function () {
+  it('should change erc20 balance after opt-in migration', async function () {
     await erc20Token.approve(erc827Token.address, 10, { from: accounts[2] });
     await erc827Token.migrate({ from: accounts[2] });
     await erc20Token.approve(erc827Token.address, 15, { from: accounts[3] });
@@ -33,18 +33,23 @@ contract('ERC827Migratable', function (accounts) {
     assert.equal(await erc827Token.totalSupply(), 25);
   });
 
-  it.only('should change erc20 balance after forced migration', async function () {
-    await erc827Token.migrateFrom(accounts[3], { from: accounts[0] });
+  it('should change erc20 balance after forced migration', async function () {
+    await erc827Token.migrateFrom(accounts[2], { from: accounts[0] });
+    await erc827Token.migrateFromMany([accounts[3], accounts[4]], { from: accounts[0] });
 
     // Check balances
+    assert.equal(await erc20Token.balanceOf(accounts[2]), 10);
+    assert.equal(await erc827Token.balanceOf(accounts[2]), 10);
     assert.equal(await erc20Token.balanceOf(accounts[3]), 20);
     assert.equal(await erc827Token.balanceOf(accounts[3]), 20);
+    assert.equal(await erc20Token.balanceOf(accounts[4]), 30);
+    assert.equal(await erc827Token.balanceOf(accounts[4]), 30);
 
     // Check ERC827 total supply
-    assert.equal(await erc827Token.totalSupply(), 20);
+    assert.equal(await erc827Token.totalSupply(), 60);
   });
 
-  it.only('should change erc20 balance after opt-in and forced migration', async function () {
+  it('should change erc20 balance after opt-in and forced migration', async function () {
     await erc20Token.approve(erc827Token.address, 10, { from: accounts[2] });
     await erc827Token.migrate({ from: accounts[2] });
     await erc20Token.approve(erc827Token.address, 20, { from: accounts[3] });

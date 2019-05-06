@@ -39,3 +39,5 @@ build/
 .node-xmlhttprequest-*
 
 .zos.session
+
+keys.json

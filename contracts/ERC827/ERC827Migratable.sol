@@ -1,6 +1,6 @@
 /* solium-disable security/no-low-level-calls */
 
-pragma solidity ^0.5.0;
+pragma solidity ^0.5.2;
 
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
@@ -22,6 +22,7 @@ contract ERC827Migratable is ERC827, Ownable {
    * @dev Constructor
    * @param _erc20Token The address of the erc20 token where the balances will
    * be migrated.
+   * @param _erc20Token The address of the erc20 token to be migrated
    */
   constructor(address _erc20Token) public {
     require(_erc20Token != address(0), "Incorrect ERC20 token address");
@@ -41,6 +42,7 @@ contract ERC827Migratable is ERC827, Ownable {
   /**
    * @dev Migrates the approved balance from the ERC20 token * to this contract
    * and adds the new balance to the _from address
+   * @param _from The address which you want to migrate the tokens
    */
   function migrateFrom(address _from) public onlyOwner {
     require(_from != address(0), "Cant migrate burned tokens");
@@ -49,6 +51,17 @@ contract ERC827Migratable is ERC827, Ownable {
       "Cant migrate tokens that already have been migrated"
     );
     _mint(_from, erc20Token.balanceOf(_from));
+  }
+
+  /**
+   * @dev Migrates the approved balance from the ERC20 token * to this contract
+   * and adds the new balances to the _from addressese
+   * @param _from The addresses which you want to migrate the tokens
+   */
+  function migrateFromMany(address[] memory _from) public onlyOwner {
+    for (uint i = 0; i < _from.length; i++) {
+      migrateFrom(_from[i]);
+    }
   }
 
 }
