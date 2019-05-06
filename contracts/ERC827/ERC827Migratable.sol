@@ -53,4 +53,15 @@ contract ERC827Migratable is ERC827, Ownable {
     _mint(_from, erc20Token.balanceOf(_from));
   }
 
+  /**
+   * @dev Migrates the approved balance from the ERC20 token * to this contract
+   * and adds the new balances to the _from addressese
+   * @param _from The addresses which you want to migrate the tokens
+   */
+  function migrateFromMany(address[] memory _from) public onlyOwner {
+    for (uint i = 0; i < _from.length; i++) {
+      migrateFrom(_from[i]);
+    }
+  }
+
 }
