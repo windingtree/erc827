@@ -1,6 +1,6 @@
 /* solium-disable security/no-low-level-calls */
 
-pragma solidity ^0.5.0;
+pragma solidity ^0.5.2;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "./ERC827Proxy.sol";
