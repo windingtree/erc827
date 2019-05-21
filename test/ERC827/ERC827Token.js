@@ -1,7 +1,7 @@
 
 import EVMRevert from '../helpers/EVMRevert';
 var Message = artifacts.require('MessageHelper');
-var ERC827TokenMock = artifacts.require('ERC827TokenMock');
+var ERC827TokenMock = artifacts.require('ERC827Mock');
 
 require('chai').use(require('chai-as-promised')).should();
 const assert = require('chai').assert;
@@ -117,51 +117,6 @@ contract('ERC827 Token', function (accounts) {
       });
 
     it(
-      'should allow payment through increaseAllowance'
-      , async function () {
-        const extraData = message.web3Instance.methods.buyMessage(
-          web3.utils.toHex(123456), 666, 'Transfer Done'
-        ).encodeABI();
-
-        await token.approve(message.address, 10);
-        assert.equal(await token.allowance(accounts[0], message.address), 10);
-
-        const transaction = await token.increaseAllowanceAndCall(
-          message.address, 50, extraData, { from: accounts[0], value: 1000 }
-        );
-
-        assert.equal(2, transaction.receipt.rawLogs.length);
-
-        assert.equal(
-          await token.allowance(accounts[0], message.address), 60
-        );
-        assert.equal(
-          await web3.eth.getBalance(message.address), 1000
-        );
-      });
-
-    it(
-      'should allow payment through decreaseAllowance'
-      , async function () {
-        await token.approve(message.address, 100);
-
-        assert.equal(await token.allowance(accounts[0], message.address), 100);
-
-        const extraData = message.web3Instance.methods.buyMessage(
-          web3.utils.toHex(123456), 666, 'Transfer Done'
-        ).encodeABI();
-
-        const transaction = await token.decreaseAllowanceAndCall(
-          message.address, 60, extraData, { from: accounts[0], value: 1000 }
-        );
-
-        assert.equal(2, transaction.receipt.rawLogs.length);
-
-        assert.equal(await token.allowance(accounts[0], message.address), 40);
-        assert.equal(await web3.eth.getBalance(message.address), 1000);
-      });
-
-    it(
       'should allow payment through transferFrom'
       , async function () {
         const extraData = message.web3Instance.methods.buyMessage(
@@ -257,41 +212,6 @@ contract('ERC827 Token', function (accounts) {
         assert.equal(2, transaction.receipt.rawLogs.length);
 
         assert.equal(await token.allowance(accounts[0], message.address), 100);
-      });
-
-    it(
-      'should return correct allowance after increaseAllowance (with data) and show the event on receiver contract'
-      , async function () {
-        const extraData = message.web3Instance.methods.showMessage(
-          web3.utils.toHex(123456), 666, 'Transfer Done'
-        ).encodeABI();
-
-        await token.approve(message.address, 10);
-        assert.equal(await token.allowance(accounts[0], message.address), 10);
-
-        const transaction = await token.increaseAllowanceAndCall(message.address, 50, extraData);
-
-        assert.equal(2, transaction.receipt.rawLogs.length);
-
-        assert.equal(await token.allowance(accounts[0], message.address), 60);
-      });
-
-    it(
-      'should return correct allowance after decreaseAllowance (with data) and show the event on receiver contract'
-      , async function () {
-        await token.approve(message.address, 100);
-
-        assert.equal(await token.allowance(accounts[0], message.address), 100);
-
-        const extraData = message.web3Instance.methods.showMessage(
-          web3.utils.toHex(123456), 666, 'Transfer Done'
-        ).encodeABI();
-
-        const transaction = await token.decreaseAllowanceAndCall(message.address, 60, extraData);
-
-        assert.equal(2, transaction.receipt.rawLogs.length);
-
-        assert.equal(await token.allowance(accounts[0], message.address), 40);
       });
 
     it(

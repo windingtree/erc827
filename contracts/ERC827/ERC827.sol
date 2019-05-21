@@ -38,9 +38,9 @@ contract ERC827 is ERC20 {
    * @param _data ABI-encoded contract call to call `_spender` address.
    * @return true if the call function was executed successfully
    */
-  function approveAndCall(address _spender, uint256 _value, bytes memory _data)
-    public payable returns (bool)
-  {
+  function approveAndCall(
+    address _spender, uint256 _value, bytes memory _data
+  ) public payable returns (bool) {
     super.approve(_spender, _value);
     _call(_spender, _data);
     return true;
@@ -54,10 +54,9 @@ contract ERC827 is ERC20 {
    * @param _data ABI-encoded contract call to call `_to` address.
    * @return true if the call function was executed successfully
    */
-
-  function transferAndCall(address _to, uint256 _value, bytes memory _data)
-    public payable returns (bool)
-  {
+  function transferAndCall(
+    address _to, uint256 _value, bytes memory _data
+  ) public payable returns (bool) {
     super.transfer(_to, _value);
     _call(_to, _data);
     return true;
@@ -74,51 +73,9 @@ contract ERC827 is ERC20 {
    */
   function transferFromAndCall(
     address _from, address _to, uint256 _value, bytes memory _data
-  )
-    public payable returns (bool)
-  {
+  ) public payable returns (bool) {
     super.transferFrom(_from, _to, _value);
     _call(_to, _data);
-    return true;
-  }
-
-  /**
-   * @dev Addition to ERC20 methods. Increase the amount of tokens that
-   * an owner allowed to a spender and execute a call with the sent data.
-   * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait
-   * until the first transaction is mined)
-   * @param _spender The address which will spend the funds.
-   * @param _addedValue The amount of tokens to increase the allowance by.
-   * @param _data ABI-encoded contract call to call `_spender` address.
-   */
-  function increaseAllowanceAndCall(
-    address _spender, uint _addedValue, bytes memory _data
-  )
-    public payable returns (bool)
-  {
-    super.increaseAllowance(_spender, _addedValue);
-    _call(_spender, _data);
-    return true;
-  }
-
-  /**
-   * @dev Addition to StandardToken methods. Decrease the amount of tokens that
-   * an owner allowed to a spender and execute a call with the sent data.
-   * approve should be called when allowed[_spender] == 0. To decrement
-   * allowed value is better to use this function to avoid 2 calls (and wait
-   * until the first transaction is mined)
-   * @param _spender The address which will spend the funds.
-   * @param _subtractedValue The amount of tokens to decrease the allowance by.
-   * @param _data ABI-encoded contract call to call `_spender` address.
-   */
-  function decreaseAllowanceAndCall(
-    address _spender, uint _subtractedValue, bytes memory _data
-  )
-    public payable returns (bool)
-  {
-    super.decreaseAllowance(_spender, _subtractedValue);
-    _call(_spender, _data);
     return true;
   }
 
@@ -128,12 +85,10 @@ contract ERC827 is ERC20 {
    * @param _data ABI-encoded contract call to call `_to` address.
    */
   function _call(address _to, bytes memory _data) internal {
-
     // solium-disable-next-line security/no-call-value, no-unused-vars
     (bool success, bytes memory data) = address(proxy).call.value(msg.value)(
       abi.encodeWithSelector(proxy.callContractFunctionSignature(), _to, _data)
     );
-
     require(success, "Call to external contract failed");
   }
 

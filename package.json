@@ -48,21 +48,21 @@
     "dotenv": "^4.0.0",
     "eslint": "^4.11.0",
     "eslint-config-standard": "^10.2.1",
-    "eslint-plugin-import": "^2.16.0",
+    "eslint-plugin-import": "^2.17.2",
     "eslint-plugin-node": "^5.2.1",
     "eslint-plugin-promise": "^3.6.0",
     "eslint-plugin-standard": "^3.0.1",
     "ethereumjs-util": "^5.1.2",
     "ethjs-abi": "^0.2.1",
-    "ganache-cli": "^6.1.0",
+    "ganache-cli": "^6.4.3",
     "solidity-coverage": "^0.5.11",
-    "solium": "^1.2.3",
-    "truffle": "^5.0.14",
+    "solium": "^1.2.4",
+    "truffle": "^5.0.15",
     "truffle-hdwallet-provider": "0.0.3",
-    "web3-utils": "^1.0.0-beta.48"
+    "web3-utils": "^1.0.0-beta.54"
   },
   "dependencies": {
     "openzeppelin-solidity": "^2.2.0",
-    "zos": "^2.2.2"
+    "zos": "^2.2.3"
   }
 }

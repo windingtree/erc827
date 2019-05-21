@@ -28,19 +28,16 @@ contract ERC827Proxy {
    * @param _target address The address which you want to transfer to
    * @param _data bytes The data to be executed in the call
    */
-  function callContract(address _target, bytes memory _data)
-    public payable returns (bool)
-  {
+  function callContract(
+    address _target, bytes memory _data
+  ) public payable returns (bool) {
     require(
       msg.sender == address(token),
       "Proxy only can execute calls from the token contract"
     );
-
     // solium-disable-next-line security/no-call-value, no-unused-vars
     (bool success, bytes memory data) = _target .call.value(msg.value)(_data);
-
     require(success, "Proxy call failed");
-
     return true;
   }
 
