@@ -3,7 +3,7 @@
 pragma solidity ^0.5.2;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
-import "./ERC827Proxy.sol";
+import "../utils/Create2.sol";
 
 
 /**
@@ -15,13 +15,14 @@ import "./ERC827Proxy.sol";
  */
 contract ERC827 is ERC20 {
 
-  ERC827Proxy public proxy;
+  bytes public proxyBytecode;
+  mapping(address => uint256) public nonces;
 
   /**
    * @dev Constructor
    */
-  constructor() public {
-    proxy = new ERC827Proxy();
+  constructor(bytes memory _proxyBytecode) public {
+    proxyBytecode = _proxyBytecode;
   }
 
   /**
@@ -85,11 +86,14 @@ contract ERC827 is ERC20 {
    * @param _data ABI-encoded contract call to call `_to` address.
    */
   function _call(address _to, bytes memory _data) internal {
+    bytes32 salt = keccak256(abi.encodePacked(msg.sender, _to, nonces[msg.sender]));
+    address proxy = Create2.deploy(salt, proxyBytecode);
     // solium-disable-next-line security/no-call-value, no-unused-vars
     (bool success, bytes memory data) = address(proxy).call.value(msg.value)(
-      abi.encodeWithSelector(proxy.callContractFunctionSignature(), _to, _data)
+      abi.encodeWithSelector(bytes4(keccak256("callContract(address,bytes)")), _to, _data)
     );
     require(success, "Call to external contract failed");
+    nonces[msg.sender].add(1);
   }
 
 }

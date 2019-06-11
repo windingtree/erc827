@@ -2,6 +2,8 @@
 
 pragma solidity ^0.5.2;
 
+import "./IERC827.sol";
+
 
 /**
  * @title ERC827Proxy
@@ -11,16 +13,13 @@ pragma solidity ^0.5.2;
  */
 contract ERC827Proxy {
 
-  address public token;
-  bytes4 public callContractFunctionSignature = bytes4(
-    keccak256("callContract(address,bytes)")
-  );
+  IERC827 public token;
 
   /**
    * @dev constructor
    */
   constructor() public {
-    token = address(msg.sender);
+    token = IERC827(msg.sender);
   }
 
   /**
@@ -36,8 +35,12 @@ contract ERC827Proxy {
       "Proxy only can execute calls from the token contract"
     );
     // solium-disable-next-line security/no-call-value, no-unused-vars
-    (bool success, bytes memory data) = _target .call.value(msg.value)(_data);
+    (bool success, bytes memory data) = _target.call.value(msg.value)(_data);
     require(success, "Proxy call failed");
+    require(token.balanceOf(address(this)) == 0, "Cant end proxy call with token balance in proxy");
+    require(address(this).balance == 0, "Cant end proxy call with eth balance in proxy");
+
+    selfdestruct(address(0));
     return true;
   }
 
