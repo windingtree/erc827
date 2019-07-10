@@ -24,7 +24,7 @@ contract ERC827Migratable is ERC827, Ownable {
    * be migrated.
    * @param _erc20Token The address of the erc20 token to be migrated
    */
-  constructor(address _erc20Token) public {
+  constructor(address _erc20Token, bytes memory proxyBytecode) ERC827(proxyBytecode) public {
     require(_erc20Token != address(0), "Incorrect ERC20 token address");
     erc20Token = IERC20(_erc20Token);
   }

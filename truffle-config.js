@@ -43,6 +43,10 @@ module.exports = {
   compilers: {
     solc: {
       version: '0.5.2',
+      settings: {
+        evmVersion: 'constantinople',
+      },
     },
+
   }
 };

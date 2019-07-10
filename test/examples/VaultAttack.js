@@ -1,7 +1,8 @@
 
 import EVMRevert from '../helpers/EVMRevert';
-var ERC827TokenMock = artifacts.require('ERC827TokenMock');
-var VaultAttack = artifacts.require('VaultAttack');
+const ERC827Mock = artifacts.require('ERC827Mock');
+const VaultAttack = artifacts.require('VaultAttack');
+const ERC827Proxy = artifacts.require('ERC827Proxy');
 
 require('chai')
   .use(require('chai-as-promised'))
@@ -11,7 +12,7 @@ contract('VaultAttack', function ([victim, attacker]) {
   let token, vault;
 
   beforeEach(async function () {
-    token = await ERC827TokenMock.new(victim, 100);
+    token = await ERC827Mock.new(victim, 100, ERC827Proxy.bytecode);
     vault = await VaultAttack.new();
     vault.web3Instance = new web3.eth.Contract(vault.abi, vault.address);
   });

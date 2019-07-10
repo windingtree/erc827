@@ -1,7 +1,8 @@
 
 import EVMRevert from '../helpers/EVMRevert';
-var ERC827TokenMock = artifacts.require('ERC827TokenMock');
-var ERC20TokenMock = artifacts.require('ERC20TokenMock');
+const ERC827Mock = artifacts.require('ERC827Mock');
+const ERC20Mock = artifacts.require('ERC20Mock');
+const ERC827Proxy = artifacts.require('ERC827Proxy');
 
 require('chai')
   .use(require('chai-as-promised'))
@@ -11,8 +12,8 @@ contract('ClaimOtherTokensAttack', function ([attacker, victim]) {
   let erc827, erc20;
 
   beforeEach(async function () {
-    erc827 = await ERC827TokenMock.new(attacker, 100);
-    erc20 = await ERC20TokenMock.new(victim, 100);
+    erc827 = await ERC827Mock.new(attacker, 100, ERC827Proxy.bytecode);
+    erc20 = await ERC20Mock.new(victim, 100);
     erc20.web3Instance = new web3.eth.Contract(erc20.abi, erc20.address);
   });
 
